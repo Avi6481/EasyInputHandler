@@ -8,8 +8,8 @@ end
 
 -- Keyboard VK codes
 local VK_SPACE = 0x20
-local VK_A     = 0x41
-local VK_D     = 0x44
+local VK_A = 0x41
+local VK_D = 0x44
 
 -- Gamepad button flags
 local GP_A = 0x1000
@@ -49,7 +49,7 @@ registerForEvent("onDraw", function()
         input:IsKeyPressed(VK_SPACE), input:IsKeyPressed(VK_A), input:IsKeyPressed(VK_D)
     ))
 
-    -- Spacebar + button toggle
+    -- Spacebar + button toggle just to mess around with the cursor
     if input:IsKeyPressed(VK_SPACE) then
         cursorVisible = not cursorVisible
     end
