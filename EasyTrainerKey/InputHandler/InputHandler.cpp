@@ -1,67 +1,80 @@
 #include "InputHandler/InputHandler.h"
 #include "InputHandler/Keyboard/Keyboard.h"
 #include "InputHandler/Gamepad/Gamepad.h"
+#include "InputHandler/Mouse/Mouse.h"
+#include "InputHandler/Block/Block.h"
 
-namespace EasyTrainer::Input {
-
-    RED4ext::TTypedClass<InputHandler> g_InputHandlerType("EasyInputHandler");
+namespace EasyTrainer::Input
+{
+    static RED4ext::TTypedClass<InputHandler> s_InputHandlerType("EasyInputHandler");
 
     RED4ext::CClass* InputHandler::GetNativeType()
     {
-        return &g_InputHandlerType;
+        return &s_InputHandlerType;
+    }
+
+    template<typename Function>
+    static void RegisterNative(const char* name, const char* returnType, Function function)
+    {
+        auto* native = RED4ext::CClassFunction::Create(&s_InputHandlerType, name, name, function);
+        native->flags = { .isNative = true };
+        if (returnType)
+            native->SetReturnType(returnType);
+        s_InputHandlerType.RegisterFunction(native);
     }
 
     void RegisterTypes()
     {
-        g_InputHandlerType.flags.isNative = true;
-        RED4ext::CRTTISystem::Get()->RegisterType(&g_InputHandlerType);
+        RED4ext::CNamePool::Add("EasyInputHandler");
+        s_InputHandlerType.flags = { .isNative = true };
+        RED4ext::CRTTISystem::Get()->RegisterType(&s_InputHandlerType);
     }
 
     void PostRegisterTypes()
     {
-        auto regFunc = [&](const char* name, auto fn)
-            {
-                auto f = RED4ext::CClassFunction::Create(&g_InputHandlerType, name, name, fn, { .isNative = true });
-                f->SetReturnType("Bool");
-                g_InputHandlerType.RegisterFunction(f);
-            };
+        s_InputHandlerType.parent = RED4ext::CRTTISystem::Get()->GetClass("IScriptable");
 
-        auto regFuncInt = [&](const char* name, auto fn)
-            {
-                auto f = RED4ext::CClassFunction::Create(&g_InputHandlerType, name, name, fn, { .isNative = true });
-                f->SetReturnType("Int32");
-                g_InputHandlerType.RegisterFunction(f);
-            };
+        RegisterNative("IsKeyPressed", "Bool", &Keyboard::IsKeyPressed);
+        RegisterNative("IsKeyboardActive", "Bool", &Keyboard::IsKeyboardActive);
+        RegisterNative("GetPressedKey", "Int32", &Keyboard::GetPressedKey);
+        RegisterNative("GetPressedKeys", "array:Int32", &Keyboard::GetPressedKeys);
+        RegisterNative("GetKeyName", "String", &Keyboard::GetKeyName);
+        RegisterNative("ShowCursor", "Bool", &Keyboard::ShowCursorFn);
+        RegisterNative("IsCursorVisible", "Bool", &Keyboard::IsCursorVisibleFn);
 
-        auto regFuncFloat = [&](const char* name, auto fn)
-            {
-                auto f = RED4ext::CClassFunction::Create(&g_InputHandlerType, name, name, fn, { .isNative = true });
-                f->SetReturnType("Float");
-                g_InputHandlerType.RegisterFunction(f);
-            };
+        RegisterNative("BeginTextCapture", nullptr, &Keyboard::BeginTextCapture);
+        RegisterNative("EndTextCapture", nullptr, &Keyboard::EndTextCapture);
+        RegisterNative("ConsumeTypedText", "String", &Keyboard::ConsumeTypedText);
 
-        auto rtti = RED4ext::CRTTISystem::Get();
-        g_InputHandlerType.parent = rtti->GetClass("IScriptable");
+        RegisterNative("GetMouseX", "Float", &Mouse::GetMouseX);
+        RegisterNative("GetMouseY", "Float", &Mouse::GetMouseY);
+        RegisterNative("IsMouseButtonDown", "Bool", &Mouse::IsMouseButtonDown);
+        RegisterNative("ConsumeMouseWheel", "Float", &Mouse::ConsumeMouseWheel);
+        RegisterNative("LogInputDiagnostics", nullptr, &Mouse::LogInputDiagnostics);
 
-        regFunc("IsKeyPressed", &Keyboard::IsKeyPressed);
-        regFunc("IsKeyboardActive", &Keyboard::IsKeyboardActive);
-        regFuncInt("GetPressedKey", &Keyboard::GetPressedKey);
+        RegisterNative("IsGamepadButtonPressed", "Bool", &Gamepad::IsGamepadButtonPressed);
+        RegisterNative("IsGamepadActive", "Bool", &Gamepad::IsGamepadActive);
+        RegisterNative("IsGamepadConnected", "Bool", &Gamepad::IsGamepadConnected);
+        RegisterNative("GetPressedGamepadButton", "Int32", &Gamepad::GetPressedGamepadButton);
+        RegisterNative("GetGamepadType", "Int32", &Gamepad::GetGamepadType);
+        RegisterNative("GetGamepadButtonName", "String", &Gamepad::GetGamepadButtonName);
+        RegisterNative("GetGamepadAxis", "Int32", &Gamepad::GetGamepadAxis);
+        RegisterNative("IsLeftStickDirection", "Bool", &Gamepad::IsLeftStickDirection);
+        RegisterNative("IsRightStickDirection", "Bool", &Gamepad::IsRightStickDirection);
+        RegisterNative("GetLeftTrigger", "Int32", &Gamepad::GetLeftTrigger);
+        RegisterNative("GetRightTrigger", "Int32", &Gamepad::GetRightTrigger);
+        RegisterNative("GetLeftTriggerNormalized", "Float", &Gamepad::GetLeftTriggerNormalized);
+        RegisterNative("GetRightTriggerNormalized", "Float", &Gamepad::GetRightTriggerNormalized);
+        RegisterNative("SetGamepadVibration", "Bool", &Gamepad::SetGamepadVibration);
 
-        regFunc("ShowCursor", &Keyboard::ShowCursorFn);
-        regFunc("IsCursorVisible", &Keyboard::IsCursorVisibleFn);
-
-        regFunc("IsGamepadButtonPressed", &Gamepad::IsGamepadButtonPressed);
-        regFunc("IsGamepadActive", &Gamepad::IsGamepadActive);
-        regFuncInt("GetPressedGamepadButton", &Gamepad::GetPressedGamepadButton);
-        regFuncInt("GetGamepadAxis", &Gamepad::GetGamepadAxis);
-
-        regFunc("IsLeftStickDirection", &Gamepad::IsLeftStickDirection);
-        regFunc("IsRightStickDirection", &Gamepad::IsRightStickDirection);
-        regFuncInt("GetLeftTrigger", &Gamepad::GetLeftTrigger);
-        regFuncInt("GetRightTrigger", &Gamepad::GetRightTrigger);
-        regFuncFloat("GetLeftTriggerNormalized", &Gamepad::GetLeftTriggerNormalized);
-        regFuncFloat("GetRightTriggerNormalized", &Gamepad::GetRightTriggerNormalized);
-        regFunc("SetGamepadVibration", &Gamepad::SetGamepadVibration);
+        RegisterNative("BlockKey", nullptr, &Block::BlockKey);
+        RegisterNative("BlockAllKeys", nullptr, &Block::BlockAllKeys);
+        RegisterNative("BlockMouseButton", nullptr, &Block::BlockMouseButton);
+        RegisterNative("BlockMouseWheel", nullptr, &Block::BlockMouseWheel);
+        RegisterNative("BlockMouseMove", nullptr, &Block::BlockMouseMove);
+        RegisterNative("BlockGamepadButtons", nullptr, &Block::BlockGamepadButtons);
+        RegisterNative("BlockGamepadStick", nullptr, &Block::BlockGamepadStick);
+        RegisterNative("ClearInputBlocks", nullptr, &Block::ClearInputBlocks);
+        RegisterNative("GetInputBlockStatus", "Int32", &Block::GetInputBlockStatus);
     }
-
 }

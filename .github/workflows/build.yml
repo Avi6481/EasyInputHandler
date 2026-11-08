@@ -1,0 +1,58 @@
+name: Build
+
+on:
+  push:
+    branches: [master, main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Get source
+        uses: actions/checkout@v4
+        with:
+          path: EasyInputHandler
+
+      - name: Get RED4ext.SDK
+        uses: actions/checkout@v4
+        with:
+          repository: wopss/RED4ext.SDK
+          ref: 0f5eba42a4cf3a1161ad3de0b4ed6f1901ec169e
+          path: RED4ext.SDK
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        run: msbuild EasyInputHandler\EasyInputHandler.sln /m /p:Configuration=Release /p:Platform=x64 /p:GameDir=${{ github.workspace }}\out\
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Get-ChildItem out -Recurse -Include *.exp, *.lib, *.pdb | Remove-Item
+          Copy-Item EasyInputHandler\EasyTrainerKey\SDL3\LICENSE.txt out\red4ext\plugins\EasyTrainer\SDL3-LICENSE.txt
+          Compress-Archive -Path out\* -DestinationPath EasyInputHandler.zip
+          Get-ChildItem out -Recurse -File | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Resolve-Path -Relative $_.Path)" } | Tee-Object SHA256SUMS.txt
+          Get-FileHash EasyInputHandler.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  EasyInputHandler.zip" } | Tee-Object SHA256SUMS.txt -Append
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyInputHandler
+          path: |
+            EasyInputHandler.zip
+            SHA256SUMS.txt
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            EasyInputHandler.zip
+            SHA256SUMS.txt

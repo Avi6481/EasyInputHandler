@@ -1,44 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
+    <Filter Include="Plugin"><UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier></Filter>
+    <Filter Include="InputHandler"><UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier></Filter>
+    <Filter Include="InputHandler\Gamepad"><UniqueIdentifier>{6C1E2B5A-3D4F-4E21-9A7B-0C8D9E1F2A3B}</UniqueIdentifier></Filter>
+    <Filter Include="InputHandler\Keyboard"><UniqueIdentifier>{7D2F3C6B-4E5A-4F32-8B8C-1D9EAF203B4C}</UniqueIdentifier></Filter>
+    <Filter Include="InputHandler\Messages"><UniqueIdentifier>{2B7C4E19-6A3D-4F58-B1C2-7E9D0A4F3C61}</UniqueIdentifier></Filter>
+    <Filter Include="InputHandler\Mouse"><UniqueIdentifier>{5E1A9C37-2D4B-4C86-A3F5-8B0E6D2C7A94}</UniqueIdentifier></Filter>
+    <Filter Include="InputHandler\Block"><UniqueIdentifier>{A8BED3C1-04FD-48AF-9B82-F0495CF1E47E}</UniqueIdentifier></Filter>
+    <Filter Include="RedScript"><UniqueIdentifier>{8E3A4D7C-5F6B-4A43-9C9D-2EAFB0314C5D}</UniqueIdentifier></Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputHandler\InputHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputHandler\Keyboard\Keyboard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputHandler\Gamepad\Gamepad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="Common.h"><Filter>Plugin</Filter></ClInclude>
+    <ClInclude Include="Plugin.h"><Filter>Plugin</Filter></ClInclude>
+    <ClInclude Include="InputHandler\InputHandler.h"><Filter>InputHandler</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Window.h"><Filter>InputHandler</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Gamepad\Gamepad.h"><Filter>InputHandler\Gamepad</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Gamepad\SdlGamepad.h"><Filter>InputHandler\Gamepad</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Keyboard\Keyboard.h"><Filter>InputHandler\Keyboard</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Messages\Messages.h"><Filter>InputHandler\Messages</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Mouse\Mouse.h"><Filter>InputHandler\Mouse</Filter></ClInclude>
+    <ClInclude Include="InputHandler\Block\Block.h"><Filter>InputHandler\Block</Filter></ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputHandler\InputHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputHandler\Keyboard\Keyboard.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputHandler\Gamepad\Gamepad.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputHandler\Keyboard\Cursor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="dllmain.cpp"><Filter>Plugin</Filter></ClCompile>
+    <ClCompile Include="Plugin.cpp"><Filter>Plugin</Filter></ClCompile>
+    <ClCompile Include="InputHandler\InputHandler.cpp"><Filter>InputHandler</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Gamepad\Gamepad.cpp"><Filter>InputHandler\Gamepad</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Gamepad\SdlGamepad.cpp"><Filter>InputHandler\Gamepad</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Keyboard\Keyboard.cpp"><Filter>InputHandler\Keyboard</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Keyboard\Cursor.cpp"><Filter>InputHandler\Keyboard</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Keyboard\KeyNames.cpp"><Filter>InputHandler\Keyboard</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Keyboard\TextCapture.cpp"><Filter>InputHandler\Keyboard</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Messages\Messages.cpp"><Filter>InputHandler\Messages</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Mouse\Mouse.cpp"><Filter>InputHandler\Mouse</Filter></ClCompile>
+    <ClCompile Include="InputHandler\Block\Block.cpp"><Filter>InputHandler\Block</Filter></ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RedScript\EasyTrainerInputHandler.reds"><Filter>RedScript</Filter></None>
   </ItemGroup>
 </Project>

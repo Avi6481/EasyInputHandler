@@ -1,179 +1,154 @@
 #include "InputHandler/Gamepad/Gamepad.h"
+#include "InputHandler/Gamepad/SdlGamepad.h"
+#include "InputHandler/Window.h"
 
-namespace EasyTrainer::Input {
-    namespace Gamepad {
+#include <algorithm>
+#include <cstdlib>
+#include <string_view>
 
-        static bool IsGameWindowFocused()
-        {
-            HWND hwnd = GetForegroundWindow();
-            if (!hwnd)
-                return false;
+namespace EasyTrainer::Input::Gamepad
+{
+    constexpr int32_t STICK_DEADZONE = 7849;
 
-            DWORD pid = 0;
-            GetWindowThreadProcessId(hwnd, &pid);
-            return pid == GetCurrentProcessId();
-        }
+    static SdlGamepad::State ReadState()
+    {
+        if (!Window::IsGameFocused())
+            return {};
+        return SdlGamepad::Poll();
+    }
 
-        static bool GetState(XINPUT_STATE& state)
-        {
-            if (!IsGameWindowFocused())
-                return false;
-            return (XInputGetState(0, &state) == ERROR_SUCCESS);
-        }
+    static int32_t Axis(const SdlGamepad::State& state, SdlGamepad::Axis axis)
+    {
+        return state.Axes[static_cast<int32_t>(axis)];
+    }
 
-        void IsGamepadButtonPressed(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            int32_t buttonCode;
-            RED4ext::GetParameter(aFrame, &buttonCode);
-            aFrame->code++;
+    static bool StickDirection(int32_t x, int32_t y, std::string_view direction)
+    {
+        if (std::abs(x) < STICK_DEADZONE) x = 0;
+        if (std::abs(y) < STICK_DEADZONE) y = 0;
 
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = GetState(state) && (state.Gamepad.wButtons & buttonCode) != 0;
-            }
-        }
+        if (direction == "up") return y > 0 && x == 0;
+        if (direction == "down") return y < 0 && x == 0;
+        if (direction == "left") return x < 0 && y == 0;
+        if (direction == "right") return x > 0 && y == 0;
+        if (direction == "upleft") return x < 0 && y > 0;
+        if (direction == "upright") return x > 0 && y > 0;
+        if (direction == "downleft") return x < 0 && y < 0;
+        if (direction == "downright") return x > 0 && y < 0;
+        return false;
+    }
 
-        void IsGamepadActive(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = GetState(state) && (state.Gamepad.wButtons != 0);
-            }
-        }
+    void IsGamepadButtonPressed(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        int32_t button = 0;
+        RED4ext::GetParameter(frame, &button);
+        frame->code++;
 
-        void GetPressedGamepadButton(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, int32_t* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) {
-                *aOut = 0;
-                XINPUT_STATE state{};
-                if (GetState(state)) {
-                    if (state.Gamepad.wButtons != 0)
-                        *aOut = static_cast<int32_t>(state.Gamepad.wButtons);
-                }
-            }
-        }
+        if (out) *out = (ReadState().Buttons & static_cast<uint32_t>(button)) != 0;
+    }
 
-        void GetGamepadAxis(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, int32_t* aOut, int64_t)
-        {
-            int32_t axisCode;
-            RED4ext::GetParameter(aFrame, &axisCode);
-            aFrame->code++;
+    void IsGamepadActive(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = ReadState().Buttons != 0;
+    }
 
-            if (aOut) {
-                *aOut = 0;
-                XINPUT_STATE state{};
-                if (GetState(state)) {
-                    switch (axisCode) {
-                    case 0: *aOut = state.Gamepad.sThumbLX; break;
-                    case 1: *aOut = state.Gamepad.sThumbLY; break;
-                    case 2: *aOut = state.Gamepad.sThumbRX; break;
-                    case 3: *aOut = state.Gamepad.sThumbRY; break;
-                    case 4: *aOut = state.Gamepad.bLeftTrigger; break;
-                    case 5: *aOut = state.Gamepad.bRightTrigger; break;
-                    }
-                }
-            }
-        }
+    void IsGamepadConnected(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = SdlGamepad::Poll().Connected;
+    }
 
-        static bool StickDir(short x, short y, const char* dir)
-        {
-            const SHORT DZ = XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE;
-            if (abs(x) < DZ) x = 0;
-            if (abs(y) < DZ) y = 0;
+    void GetPressedGamepadButton(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, int32_t* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = static_cast<int32_t>(ReadState().Buttons);
+    }
 
-            if (strcmp(dir, "up") == 0) return y > 0 && x == 0;
-            if (strcmp(dir, "down") == 0) return y < 0 && x == 0;
-            if (strcmp(dir, "left") == 0) return x < 0 && y == 0;
-            if (strcmp(dir, "right") == 0) return x > 0 && y == 0;
-            if (strcmp(dir, "upleft") == 0) return x < 0 && y > 0;
-            if (strcmp(dir, "upright") == 0) return x > 0 && y > 0;
-            if (strcmp(dir, "downleft") == 0) return x < 0 && y < 0;
-            if (strcmp(dir, "downright") == 0) return x > 0 && y < 0;
+    void GetGamepadButtonName(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, RED4ext::CString* out, int64_t)
+    {
+        int32_t button = 0;
+        RED4ext::GetParameter(frame, &button);
+        frame->code++;
 
-            return false;
-        }
+        if (out) *out = RED4ext::CString(SdlGamepad::ButtonName(static_cast<uint32_t>(button), SdlGamepad::Poll().Type));
+    }
 
-        void IsLeftStickDirection(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            RED4ext::CString dir;
-            RED4ext::GetParameter(aFrame, &dir);
-            aFrame->code++;
+    void GetGamepadType(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, int32_t* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = static_cast<int32_t>(SdlGamepad::Poll().Type);
+    }
 
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = false;
-                if (GetState(state)) {
-                    *aOut = StickDir(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, dir.c_str());
-                }
-            }
-        }
+    void GetGamepadAxis(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, int32_t* out, int64_t)
+    {
+        int32_t axis = 0;
+        RED4ext::GetParameter(frame, &axis);
+        frame->code++;
 
-        void IsRightStickDirection(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            RED4ext::CString dir;
-            RED4ext::GetParameter(aFrame, &dir);
-            aFrame->code++;
+        if (!out) return;
+        *out = 0;
+        if (axis < 0 || axis >= static_cast<int32_t>(SdlGamepad::Axis::Count)) return;
+        *out = ReadState().Axes[axis];
+    }
 
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = false;
-                if (GetState(state)) {
-                    *aOut = StickDir(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, dir.c_str());
-                }
-            }
-        }
+    void IsLeftStickDirection(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        RED4ext::CString direction;
+        RED4ext::GetParameter(frame, &direction);
+        frame->code++;
 
-        void GetLeftTrigger(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, int32_t* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = GetState(state) ? state.Gamepad.bLeftTrigger : 0;
-            }
-        }
+        if (!out) return;
+        const auto state = ReadState();
+        *out = StickDirection(Axis(state, SdlGamepad::Axis::LeftX), Axis(state, SdlGamepad::Axis::LeftY), direction.c_str());
+    }
 
-        void GetRightTrigger(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, int32_t* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = GetState(state) ? state.Gamepad.bRightTrigger : 0;
-            }
-        }
+    void IsRightStickDirection(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        RED4ext::CString direction;
+        RED4ext::GetParameter(frame, &direction);
+        frame->code++;
 
-        void GetLeftTriggerNormalized(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, float* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = GetState(state) ? state.Gamepad.bLeftTrigger / 255.0f : 0.0f;
-            }
-        }
+        if (!out) return;
+        const auto state = ReadState();
+        *out = StickDirection(Axis(state, SdlGamepad::Axis::RightX), Axis(state, SdlGamepad::Axis::RightY), direction.c_str());
+    }
 
-        void GetRightTriggerNormalized(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, float* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) {
-                XINPUT_STATE state{};
-                *aOut = GetState(state) ? state.Gamepad.bRightTrigger / 255.0f : 0.0f;
-            }
-        }
+    void GetLeftTrigger(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, int32_t* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = Axis(ReadState(), SdlGamepad::Axis::LeftTrigger);
+    }
 
-        void SetGamepadVibration(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            int32_t left, right;
-            RED4ext::GetParameter(aFrame, &right);
-            RED4ext::GetParameter(aFrame, &left);
-            aFrame->code++;
+    void GetRightTrigger(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, int32_t* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = Axis(ReadState(), SdlGamepad::Axis::RightTrigger);
+    }
 
-            XINPUT_VIBRATION vib{};
-            vib.wLeftMotorSpeed = static_cast<WORD>(left);
-            vib.wRightMotorSpeed = static_cast<WORD>(right);
+    void GetLeftTriggerNormalized(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, float* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = static_cast<float>(Axis(ReadState(), SdlGamepad::Axis::LeftTrigger)) / 255.f;
+    }
 
-            if (aOut) *aOut = (XInputSetState(0, &vib) == ERROR_SUCCESS);
-        }
+    void GetRightTriggerNormalized(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, float* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = static_cast<float>(Axis(ReadState(), SdlGamepad::Axis::RightTrigger)) / 255.f;
+    }
 
-    } 
-} 
+    void SetGamepadVibration(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        int32_t left = 0;
+        int32_t right = 0;
+        RED4ext::GetParameter(frame, &left);
+        RED4ext::GetParameter(frame, &right);
+        frame->code++;
+
+        const auto low = static_cast<uint16_t>(std::clamp(left, 0, 65535));
+        const auto high = static_cast<uint16_t>(std::clamp(right, 0, 65535));
+        const bool applied = SdlGamepad::Rumble(low, high);
+        if (out) *out = applied;
+    }
+}

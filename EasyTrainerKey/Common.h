@@ -1,13 +1,16 @@
 #pragma once
 
+#define NOMINMAX
 #include <Windows.h>
-#include <Xinput.h>
+
 #include <cstdint>
+#include <filesystem>
+#include <mutex>
+#include <vector>
 
 #include <RED4ext/RED4ext.hpp>
 #include <RED4ext/CNamePool.hpp>
-#include <RED4ext/Api/PluginHandle.hpp>
-#include <RED4ext/Api/Sdk.hpp>
-#include <RED4ext/Api/Version.hpp>
-
-#pragma comment(lib, "Xinput9_1_0.lib")
+#include <RED4ext/RTTITypes.hpp>
+#include <RED4ext/GameEngine.hpp>
+#include <RED4ext/Relocation.hpp>
+#include <RED4ext/Scripting/IScriptable.hpp>

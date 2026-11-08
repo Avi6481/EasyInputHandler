@@ -81,3 +81,47 @@ function EasyInputHandler.GetRightTriggerNormalized() end
 ---@param right integer Right motor strength (0–65535)  
 ---@return boolean Success  
 function EasyInputHandler.SetGamepadVibration(left, right) end
+
+---Get every virtual key currently held down.  
+---@return integer[] Virtual key codes  
+function EasyInputHandler.GetPressedKeys() end
+
+---Get a display name for a virtual key, e.g. 0x2D -> "Insert", 0x24 -> "Home".  
+---@param vkCode integer Virtual key code  
+---@return string  
+function EasyInputHandler.GetKeyName(vkCode) end
+
+---Start collecting typed text (WM_CHAR). Backspace, Enter and Escape arrive as "\b", "\n" and "\x1b".  
+function EasyInputHandler.BeginTextCapture() end
+
+---Stop collecting typed text and clear the buffer.  
+function EasyInputHandler.EndTextCapture() end
+
+---Return the UTF-8 text typed since the last call and clear it.  
+---@return string  
+function EasyInputHandler.ConsumeTypedText() end
+
+---Cursor X in the game window, scaled to the render resolution (same space as GetDisplayResolution).  
+---@return number  
+function EasyInputHandler.GetMouseX() end
+
+---Cursor Y in the game window, scaled to the render resolution (same space as GetDisplayResolution).  
+---@return number  
+function EasyInputHandler.GetMouseY() end
+
+---Check a mouse button: 0 left, 1 right, 2 middle (respects swapped buttons).  
+---@param button integer  
+---@return boolean  
+function EasyInputHandler.IsMouseButtonDown(button) end
+
+---Wheel notches since the last call, positive is up.  
+---@return number  
+function EasyInputHandler.ConsumeMouseWheel() end
+
+---Write window, WndProc and raw input details to the RED4ext plugin log.  
+function EasyInputHandler.LogInputDiagnostics() end
+
+---Get the label of a gamepad button flag for the connected controller type, e.g. 0x1000 -> "A" or "Cross".  
+---@param buttonCode integer Gamepad button flag  
+---@return string  
+function EasyInputHandler.GetGamepadButtonName(buttonCode) end

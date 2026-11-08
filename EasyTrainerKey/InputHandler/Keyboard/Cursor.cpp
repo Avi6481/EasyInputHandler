@@ -1,51 +1,43 @@
 #include "InputHandler/Keyboard/Keyboard.h"
+#include "InputHandler/Messages/Messages.h"
 
-namespace EasyTrainer::Input {
-    namespace Keyboard {
+namespace EasyTrainer::Input::Keyboard
+{
+    static bool s_CursorEnabled = false;
 
-        static bool s_cursorEnabled = false;
+    // engine force cursor - same reloc CET uses for its overlay, needs engine->unkD0
+    static RED4ext::UniversalRelocFunc<void (*)(RED4ext::CBaseEngine::UnkD0*, RED4ext::CName, bool)> s_ForceCursor(2130646213UL);
 
-        // CET ForceCursor reloc
-        static RED4ext::UniversalRelocFunc<void (*)(RED4ext::CBaseEngine::UnkD0*, RED4ext::CName, bool)>
-            ForceCursor(2130646213UL);
+    void SetCursorVisible(bool enable)
+    {
+        if (s_CursorEnabled == enable)
+            return;
 
-        void SetCursorVisible(bool enable)
-        {
-            if (s_cursorEnabled == enable)
-                return; 
+        auto* engine = RED4ext::CGameEngine::Get();
+        if (!engine || !engine->unkD0)
+            return;
 
-            auto* engine = RED4ext::CGameEngine::Get();
-            if (!engine || !engine->unkD0)
-                return;
+        s_ForceCursor(engine->unkD0, RED4ext::CName("EasyTrainer"), enable);
+        ShowCursor(enable ? TRUE : FALSE);
+        s_CursorEnabled = enable;
 
-            RED4ext::CName reason("EasyTrainer");
-            ForceCursor(engine->unkD0, reason, enable);
+        Messages::EnsureInstalled();
+        Messages::SetLegacyInputRelaxed(enable);
+    }
 
-            if (enable) {
-                ShowCursor(TRUE); 
-            }
-            else {
-                ShowCursor(FALSE);  // hide once - we don't want to force hide it so others can use it 
-            }
+    void ShowCursorFn(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        bool enable = false;
+        RED4ext::GetParameter(frame, &enable);
+        frame->code++;
 
-            s_cursorEnabled = enable;
-        }
+        SetCursorVisible(enable);
+        if (out) *out = s_CursorEnabled;
+    }
 
-        void ShowCursorFn(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            bool enable = false;
-            RED4ext::GetParameter(aFrame, &enable);
-            aFrame->code++;
-
-            SetCursorVisible(enable);
-            if (aOut) *aOut = s_cursorEnabled;
-        }
-
-        void IsCursorVisibleFn(RED4ext::IScriptable*, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t)
-        {
-            aFrame->code++;
-            if (aOut) *aOut = s_cursorEnabled;
-        }
-
-    } 
-} 
+    void IsCursorVisibleFn(RED4ext::IScriptable*, RED4ext::CStackFrame* frame, bool* out, int64_t)
+    {
+        frame->code++;
+        if (out) *out = s_CursorEnabled;
+    }
+}

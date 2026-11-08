@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+!EasyTrainerKey/SDL3/lib/x64/
+EasyTrainerKey/SDL3/lib/x64/SDL3_test.lib
